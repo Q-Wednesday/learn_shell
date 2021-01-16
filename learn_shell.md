@@ -17,3 +17,56 @@
 * 可执行程序，可以是二进制文件，如用C编写的。或者用shell,python等脚本语言写的文本
 * shell 内置命令bash内部称之为shell builtin的内置命令，比如cd
 * shell函数 合并在环境变量中的小型shell脚本
+* alias命令。在其他命令的基础上定义自己的命令
+
+## 识别命令
+type<br>
+查看命令的类型如
+```
+type type
+type ls
+type cp
+```
+会得到三个不同的结果，会发现ls实际上是-color=tty的ls的别名<br>
+which——显示可执行程序位置
+
+## 获取命令文档
+help——获取内置命令帮助，如
+```
+help cd
+```
+help——显示使用信息
+```
+cd --help
+```
+man——显示程序手册页，注意man是调用less命令来显示手册文档，所有less命令都可以奏效。
+apropos——显示合适的命令，匹配合适的命令
+```
+apropos floppy
+```
+whatis——显示命令的简要描述，显示手册页的名字和一行描述
+info——显示程序的info条目，用于代替手册文档，页面使用了超链接，是树形结构。操作如下
+| 命令 | 功能 |
+| --- | --- |
+| ? | 显示命令帮助|
+| page up/down | 翻页 |
+| n/p | 下一个节点、上一个节点 |
+| u | 进入父节点 |
+| ENTER | 进入超链接 |
+|q | 退出 |
+
+## 使用别名创造自己的命令
+* 小技巧：使用分号分隔命令，可以在一行写多条命令
+
+创造命令前需要用type测试该命令是否已经存在，没有存在，则可以使用alias来创建命令。删除别名使用unalias.实例如下
+```
+type foo
+alias foo='cd /usr;ls;cd -'
+foo
+type foo
+unalis foo
+```
+
+# 重定向
+
+
