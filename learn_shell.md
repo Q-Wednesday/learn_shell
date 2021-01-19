@@ -298,3 +298,4 @@ killall [-u user] [-signal] name...<br>
 ## 更多和进程相关的命令
 进程监控是重要的系统管理任务，所以有很多命令来为它服务。<br>
 pstree,树状进程列表。vmstat,资源使用情况。xload,绘制系统时间负载情况。tload,类似xload,但是在终端绘制
+
