@@ -1,0 +1,13 @@
+total 64
+-rw-r--r-- 1 root root   210 Jan 17 18:06 error_cmd
+-rw-r--r-- 1 root root   115 Jan 20 21:34 foo.txt
+-rw-r--r-- 1 root root     1 Jan 17 18:10 get_error
+-rw-r--r-- 1 root root    45 Jan 17 21:20 lazy.txt
+-rw-r--r-- 1 root root  6194 Jan 20 21:33 learn_shell2.md
+-rw-r--r-- 1 root root 16661 Jan 19 21:24 learn_shell.md
+-rw-r--r-- 1 root root     0 Jan 20 21:34 ls-output.txt
+-rw-r--r-- 1 root root    61 Jan 18 22:10 pyscript.py
+-rw-r--r-- 1 root root   287 Jan 17 17:01 test
+-rw-r--r-- 1 root root    11 Jan 17 17:06 testfile
+-rw-r--r-- 1 root root    61 Jan 17 18:04 testfunc.sh
+-rw-r--r-- 1 root root   221 Jan 20 11:08 test_sig.py
