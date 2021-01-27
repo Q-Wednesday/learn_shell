@@ -121,3 +121,74 @@ find可以综合多个选项来实现高级的文件搜索，下面一一介绍
 3. opyion选项<br>
 用于控制搜索范围，比较常用的有-depth,引导find先处理目录内文件;-maxdepth levels 陷入目录的最大级数;-mindepth levels;-mount ；-noleaf
 
+# 归档与备份
+## 文件压缩
+数据压缩，是移除数据冗余信息的过程。比如一张100x100的纯黑图像，包含了完全冗余的数据，可以压缩成数字30000（3个通道）和一个0表示，这种方式成为游程编码，是最基本的压缩技术。如今的压缩技术更复杂，但是基本目标一直是消除冗余信息。<br>
+压缩算法一般分为有损和无损两种。JPEG和MP3就是有损压缩的实例。下面讨论仅讨论无损压缩，因为很多数据无法容忍损失
+
+1. gzip 文件压缩与解压缩<br>
+gzip命令用于压缩一个或多个文件，执行命令后，原文件会被其压缩文件取代。gunzip用于把压缩文件还原成原来的文件。压缩和解压缩后权限和时间戳是保持一致的。gzip有以下选项<br>
+-c 把输出内容写到标准输出端口并保持源文件，可用--stdout或--to-stdout代替。<br>
+-d 解压缩，加上后相当于gunzip<br>
+-f 强制压缩，源文件的压缩版本已经存在也可以压缩<br>
+-l 列出压缩文件的统计<br>
+-r 递归<br>
+-t 检验压缩文件完整性<br>
+-v 压缩时显示信息<br>
+-number 设置压缩级别，1表示速度快比例小，9表示速度慢压缩比例大。默认比例6<br>
+zcat和cat功能相同，只是zcat对压缩文件进行操作。同样也有zless。
+
+2. bzip2 牺牲速度换取高质量的压缩<br>
+功能和gzip相仿，压缩算法不同。压缩后文件后缀是.bz2。除了-r选项不可用外其他与gzip相同。解压工具为bunzip2,bzcat。还有专门的bzip2revover,可以恢复损坏的文件。
+
+## 文件归档
+归档是和压缩操作配合使用的文件管理任务。归档是把众多文件合并成一个大文件的过程，通常作为系统备份的一部分。
+
+1. tar 磁带归档工具<br>
+tape archieve的缩写。tar归档文件可以由许多独立的文件、一个或多个目录层次或者两者混合组成，用法为：<br>
+tar *mode* [ *options* ] *pathname* ...<br>
+部分模式：c是创建文件，x是从归档文件中提取文件，r是在归档文件末尾追加指定路径名，t是列出归档文件内容。<br>
+指定路径名的时候通常不支持通配符，GNU版本的tar命令通过--wildcards选项支持通配符。<br>
+tar命令创建归档文件常用find命令辅助，先用find查找然后用tar压缩，如下：
+    ``` bash
+    find dir -name 'file-A' -exec tar rf dir.tar '{}' '+'
+    ```
+    实现了把文件file-A压缩进dir.tar中。是增量备份。tar命令可以利用标准输入、输出
+    ``` bash
+    find dir -name 'file-A' | tar cf - --files-from=- | gzip > dir.tgz
+    ```
+    先用find找到文件，把文件交给tar处理，文件名处指定-，表示标准输入输出文件，--files-from表示tar命令从问卷文件中读取文件路径名列表（简写为-T）归档后的文件由gzip压缩。现代GNU版本的tar命令提供gzip+z选项和bzip2+j选项直接实现上述功能
+    ``` bash
+    find dir -name 'file-A' | tar czf dir.tgz -T -#用gzip压缩
+    find dir -name 'file-A' | tar cjf dir.tgz -T -#用bzip2压缩
+    ```
+    可以利用tar在远程主机和本地间传输文件：
+    ```
+    ssh remote 'tar cf - Documants' |tar xf -
+    ```
+
+2. zip 打包压缩文件<br>
+zip既是压缩工具也是归档工具，windows用户很熟悉这个。Linux用户主要用zip程序与windows系统交换文件，而不是将其用于压缩与归档。<br>
+zip *options* *zipfile* *file*...
+<br>选项-r表示递归压缩。用unzip提取文件中内容。unzip -l只列出归档文件内容而不提取，可以增加-v选项获得更详细的列表。zip命令也可以利用标准输入输出，尽管作用不大。使用-@选项来输送文件。
+
+
+## 同步文件和目录
+1. rsync 远程文件、目录同步<br>
+该命令通过运用rsync远程更新协议，同步本地系统和远程系统上的目录。该协议允许rsync命令快速检测本地文件与远程系统上两个目录之间的不同，以最少数量的赋值动作完成同步。因为比起其他复制命令更快更经济。调用方式：
+```
+rsync options source destination
+```
+source和destination中必须至少有一个是本地的。如把本地的dir文件夹备份到foo
+```
+rsync -av dir foo
+```
+-a选项用于归档，-v用于详细输出。此时在foo中会生成dir的镜像备份。把系统备份到外部硬盘
+```
+sudo rsync -av --delete /etc /home /usr/local /media/BigDisk/backup
+```
+其中delete选项会删除残留在备份设备中而源设备不存在的文件。
+
+
+2， 在网络上使用rsync命令
+使用--rsh=ssh选项，并在destination路径名前指定远程主机名，如`remote-sys:/destination`
