@@ -509,3 +509,41 @@ PROGNAME=$(basename $0)
 ```
 编写usage函数，使用help选项或者未知选项的时候输出相关信息。使用循环读取位置参数，用case检验是否匹配，发现匹配的参数就做出相应行为
 
+# 流控制：for
+## for 传统shell形式
+for *variable* [in *words*]; do<br>
+    *commands*<br>
+done<br>
+其中variable是在循环时会增值的变量名，words是一列将值按顺序赋给变量variable的可选项。commands是每次都会执行的指令。如
+``` bash
+for i in A B C D;do
+    echo $i
+done
+```
+就会分别输出A b c d。for真正强大的功能在于创建字符列表的方式有多种。比如使用花括号扩展
+``` bash
+for i in {A...D};do
+    echo $i
+done
+```
+或者使用路径名扩展
+``` bash
+for i in *.txt;do
+    echo $i
+done
+```
+
+## for C语言形式
+很多bash版本加入了第二种for语法，类似C语言。<br>
+for (( *expression1;expression2;expression3* ));do<br>
+    *command*<br>
+done<br>
+如
+``` bash
+for ((i=0; i<5; i=i+1)); do
+    echo $i
+done
+```
+每当需要数值序列的时候，C语言形式就可以发挥作用了。
+
+
