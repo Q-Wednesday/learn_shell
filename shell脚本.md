@@ -546,4 +546,203 @@ done
 ```
 每当需要数值序列的时候，C语言形式就可以发挥作用了。
 
+# 字符串与数字
+## 参数扩展
+1. 基本参数<br>
+参数扩展最简单的形式体现在对变量的使用中，比如$a扩展后就是a所包含的内容。简单的参数也可以被阔含包围，比如${a}，这对扩展毫无影响。但当变量相邻于其他文本，则必须使用括号，否则会让shell混淆。如
+    ``` bash
+    a="foo"
+    echo "$a_file"
+    ```
+    shell会试图扩展a_file而不是a,这时就要用到大括号。同样，大于9的位置参数可以加上括号来访问，例如${11}
+2. 空变量扩展管理<br>
+有的参数扩展用于处理不存在的变量和空变量。如果变量是空的会给默认赋值，形式如下：<br>
+${*parameter:-word*}<br>
+parameter没有值，就自动扩展为word（word的值不会赋给parameter）<br>
+${*parameter:=word*}<br>
+也可以，不过这样word的值会赋给parameter。<br>
+${*parameter:?word*}<br>
+如果parameter没有设定或者为空，脚本会退出，而word输出到标准错误。<br>
+${*parameter:+word*}<br>
+parameter没有设定或者为空，不会产生任何扩展。如果非空，word的值会取代parameter的值（并不会赋值给parameter）
 
+3. 返回变量名的扩展<br>
+只有在很特殊的情况才会用到。<br>
+${!prefix*}<br>
+${!prefix@}<br>
+该扩展返回当前以prefix开头的变量名。这两种执行效果一模一样/
+
+4. 字符串操作<br>
+${#*parameter*}<br>
+扩展为parameter内包含的字符串长度。如果parameter是@或者*,扩展结果是位置参数个数。<br>
+${paramater:offset}<br>
+${parameter:offset:length}<br>
+提取一部分包含在parameter中的字符串。以offset字符开始直到末尾，除非指定了length
+    ``` bash
+    foo="This String is long"
+    echo ${foo:5}
+    echo ${foo:5:6}
+    ```
+    如果offset是负数，就表示从字符串末尾开始。注意负号前必须加空格，否则会与${parameter:-word}混淆。<br>
+    ${parameter#pattern}<br>
+    ${parameter##pattern}<br>
+    这些扩展去除了包含在parameter中的pattern部分，pattern是通配符形式。#去除最短匹配，##去除最长匹配<br>
+    ``` bash
+    foo=file.txt.zip
+    echo ${foo#*.}
+    echo ${foo##*.}
+    ```
+    ${parameter%pattern}<br>
+    ${parameter%%pattern}<br>
+    和#，##相同，区别是#是去除字符串开头，而%是去除结尾。<br>
+    下面是用于替换的脚本<br>
+    ${parameter/pattern/string}<br>
+    ${parameter//pattern/string}<br>
+    ${parameter/#pattern/string}<br>
+    ${parameter/%pattern/string}<br>
+    会把pattern部分替换为string,通常只有第一个被出现的被替换。//要求所有都替换，#要求匹配开头，%要求匹配结尾。<br>
+    参数扩展是非常重要的功能，比如要统计一个单词j的长度，使用扩展${$j}效率要高于$(echo $j| wc -c)<br>
+
+## 算数计算和扩展
+算数计算形式是`$((expression))` 
+
+1. 进制<br>
+shell支持任何进制表示整数。默认情况下是十进制。0number为八进制，0xnumber为十六进制。base#number为base进制。
+
+2. 一元运算符<br>
+即+-表示正负。
+
+3. 简单算数<br>
+除了引入**幂之外，其他与C一样，支持++，--，+=，-=。
+
+4. 位运算<br>
+~ 取反，<<,>>,&,|,^
+
+5. 逻辑操作<br>
+C里面的都支持，包括(a)?b:c
+
+## bc:一种任意精度计算语言
+shell可以处理所有的整数运算，但是更高级的数学运算无法直接实现。为了达到这个目的需要使用外部程序。比如嵌入Perl或AWK,不过这超出了学习shell脚本的范畴。另一种方法是使用专门的计算器程序，大多数Linux系统都支持这种程序。<br>
+bc程序读取一个使用类C语言编写的程序文件，并执行它。bc脚本可以是一个单独的文件，也可以从标准输入读取。支持变量，循环，函数。如下
+``` C
+/* a very simple bc script*/
+2 + 2
+```
+1. 运行<br>
+保存上面脚本为foo.bc后，运行 `bc foo.bc`。会显示版权信息，使用-q(quiet)选项进制。交互地使用bc地时候只需要简单地输入运算值，就会立即侠士结果。支持标准输入
+    ``` bash
+    bc <foo.bc
+    ```
+    也支持嵌入文档、嵌入字符串
+    ```
+    bc <<< "2+2"
+    ```
+
+2. 放入脚本中<br>
+    ``` bash
+    bc <<<- _EOF_
+            scale=10
+            ....
+            a=scale**2
+            print a, "\n"
+        _EOF
+    ```
+
+# 数组
+之前接触到的都是标量变量，只包含单一的值。
+## 创建数组
+命名数组和其他bash变量一样，访问的时候自动创建
+``` bash
+a[1]=foo
+echo ${a[1]}
+```
+使用花括号阻止shell在元素名里试图扩展路径名<br>
+使用declare命令也可以创建数组
+``` bash
+declare -a a
+```
+
+## 数组赋值
+单一赋值就是上面用的方法。还有一次给多个值<br>
+name =(value1 value2 ...)<br>
+也可以通过为每个值指定下标来进行：<br>
+days=([0]=Sun [1]=Mon ...)
+
+## 访问数组元素
+## 数组操作
+1. 输出数组所有元素<br>
+首批漫画for循环和下标"*"和"@",这两个下标的意义在之前的位置参数——处理多个位置的参数中有过详细解释，这里也是一样。也就是说${a[\*]},${a[@]},"${a[\*]}","${a[@]}"表示的含义是不同的，一般情况下最后一种"${a[@]}"比较符合要求
+
+2. 确定数组元素数目<br>
+和获取字符串长度一样用#
+    ``` bash
+    a[100]=foo
+    echo ${#a[@]} 
+    echo ${#a[100]}
+    ```
+    比较神奇的是这样的数组长度是1，不像其他的编程语言会把前100个元素置为0，而是只认为有一个元素
+
+3. 查找使用的下标<br>
+确定实际存在的元素，使用$(!array[*])和$(!array[@])。其中*和@的扩展方式和之前说的一样
+    ``` bash
+    foo=([1]=a [4]=b [5]=c)
+    for i in "${foo[@]}";do
+        echo $i
+        done
+    ```
+4. 在数组结尾增加元素<br>
+直接使用+=可以在数组尾部直接添加元素。
+
+5. 数组排序<br>
+利用管道和内置的sort
+    ``` bash
+    a=(f e g a s w)
+    a_sorted=($(for i in "${a[@]}";do echo $i;done | sort))
+    echo ${a_sorted[@]}
+    ```
+
+6. 数组的删除<br>
+使用unset命令，可以删除数组:
+    ```bash
+    unset foo
+    ```
+
+    也可以删除单个元素
+    ``` bash
+    unset 'foo[2]' #使用引用组织shell扩展！
+    ```
+    有趣的是给数组赋空值也不会清空数组——任何涉及到不含下标的数组变量引用指的是数组的元素0，即foo相当于foo[0]
+
+# 其他命令
+## 组命令和子shell
+bash允许把命令组合使用，组命令：<br>
+{ command1; command2; [commands3: ...]}<br>
+子shell:<br>
+( command1; command2; [command3: ...])<br>
+1. 执行重定向
+
+2. 进程替换<br>
+二者还是有区别，子shell是在当前shell的拷贝中执行，不会改变当前环境。而组命令就在当前shell执行。除非需要子shell,不然最好使用组命令
+
+## trap
+当设计巨大的项目时应该考虑，万一脚本运行时用户注销或者关机的时候怎么样。为了防止这种情况，在接受到关机信号后要保存中间进度(利用临时文件)。为了实现这个目的需要trap机制。语法为<br>
+trap argument signal [signal...]<br
+argument是作为命令被读取的字符串。signal是对信号的说明。当脚本接受到信号后会执行设定的命令。
+
+## 异步执行
+wait命令可以让父脚本暂停，直到指定进程结束。`wait $pid`
+
+## 命名管道
+客户端/服务器是一种常见的设计结构。可以使用命名管道这样的通信方式，也可以使用网络连接这样的进程通信方式。命名管道的工作方式与文件雷同，实际上是两块先进先出的(FIFO)的缓冲区。和普通(未命名)的管道一样，数据从一段进入，另一端出：<br>
+process1 > named_pipe<br>
+process2 < name_pipe<br>
+效果等同于执行 process1 | process2
+
+1. 设计命名管道<br>
+mkfifo pipe。使用ls -l pipe1 可以看到文件属性为p，表示是命名管道。
+
+2. 使用命名管道<br>
+ls -l >pipe1<br>
+cat < pipe1
+
+# 到此结束
